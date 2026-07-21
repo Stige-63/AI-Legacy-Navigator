@@ -90,7 +90,14 @@ export default async function handler(req, res) {
     })
 
     if (!response.ok) {
-      res.status(502).json({ error: 'upstream_error' })
+      const upstreamBody = await response.json().catch(() => ({}))
+      const upstreamCode = upstreamBody?.error?.code || upstreamBody?.error?.type || 'unknown'
+      console.error(`OpenAI request failed: status=${response.status} code=${upstreamCode}`)
+      res.status(502).json({
+        error: 'upstream_error',
+        upstreamStatus: response.status,
+        upstreamCode,
+      })
       return
     }
 
